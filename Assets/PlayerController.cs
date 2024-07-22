@@ -1,7 +1,8 @@
+using System;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
-public class PayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour
 {
     [SerializeField] private float speed;
     [SerializeField] private float jumpForce;
@@ -16,40 +17,54 @@ public class PayerController : MonoBehaviour
     private bool _isGrounded;
     private Rigidbody _playerRigidbody;
 
-    void Start()
+    private void Start()
     {
         _playerRigidbody = gameObject.GetComponent<Rigidbody>();
         _isCrawl = false;
     }
     
-    void FixedUpdate()
+    private void FixedUpdate()
     {
         Movement();
         Jump();
-        RotateCamera();
         Crawl();
+        RotateGameObj();
     }
-    
+
+    private void Update()
+    {
+        RotateCamera();
+    }
+
     private void RotateCamera()
     {
-        float h = cameraSens * Input.GetAxis("Mouse X");
         float v = cameraSens * Input.GetAxis("Mouse Y");
-        transform.Rotate(0, h, 0);
         cameraGameObject.transform.Rotate(v, 0, 0);
+        
+        float h = cameraSens * Input.GetAxis("Mouse X");
+        Vector3 vector3 = new Vector3(0, h, 0);
+        transform.Rotate(vector3);
+    }
+
+    private void RotateGameObj()
+    {
+        Transform gameObjectTransform = gameObject.transform;
+        gameObjectTransform.Rotate(0, cameraSens * Input.GetAxis("Mouse X"), 0);
+        _playerRigidbody.MoveRotation(gameObjectTransform.rotation);
     }
 
     private void Crawl()
     {
-        var position = cameraGameObject.transform.position;
+        //var position = cameraGameObject.transform.position;
         _isCrawl = Input.GetKey(sitKeyCode);
-        cameraGameObject.transform.position = _isCrawl ? new Vector3(position.x, cameraSitY, position.z) : new Vector3(position.x, cameraStandY, position.z);
+        //cameraGameObject.transform.position = _isCrawl ? new Vector3(position.x, cameraSitY, position.z) : new Vector3(position.x, cameraStandY, position.z);
         Debug.Log(_isCrawl ? "Сидит" : "Стоит");
     }
 
     private void Movement()
     {
-        float moveX = Input.GetAxis("Horizontal");
-        float moveZ = Input.GetAxis("Vertical");
+        float moveX = Input.GetAxis("Horizontal") * speed * -1;
+        float moveZ = Input.GetAxis("Vertical") * speed * -1;
 
         if (_isCrawl)
         {
@@ -59,7 +74,7 @@ public class PayerController : MonoBehaviour
 
         Vector3 movement = new Vector3(moveX, 0.0f, moveZ);
 
-        _playerRigidbody.AddForce(movement * speed);
+        _playerRigidbody.AddForce(movement);
     }
 
     private void Jump()
